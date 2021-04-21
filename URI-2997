@@ -1,0 +1,51 @@
+select 
+	dep.nome as "Departamento",
+	e.nome as "Empregado",
+	CASE
+		WHEN round((select coalesce(sum(v.valor),0) 
+	 from vencimento  v inner join emp_venc ev
+	 on ev.cod_venc = v.cod_venc
+	 where ev.matr = e.matr
+	),2) = 0 THEN 0 ELSE round((select coalesce(sum(v.valor),0) 
+	 from vencimento  v inner join emp_venc ev
+	 on ev.cod_venc = v.cod_venc
+	 where ev.matr = e.matr
+	),2) END  as "Salario Bruto",
+	CASE
+		WHEN round((
+	 select coalesce(sum(d.valor),0)
+	  from desconto d 
+	  inner join emp_desc ed
+	   on ed.cod_desc = d.cod_desc
+		where ed.matr= e.matr
+	),2) = 0 THEN 0 ELSE round((
+	 select coalesce(sum(d.valor),0)
+	  from desconto d 
+	  inner join emp_desc ed
+	   on ed.cod_desc = d.cod_desc
+		where ed.matr= e.matr
+	),2)END as "Total Desconto",
+	CASE
+		WHEN round(coalesce((select sum(v.valor) 
+	 from vencimento  v inner join emp_venc ev
+	 on ev.cod_venc = v.cod_venc
+	 where ev.matr = e.matr) - ( select coalesce(sum(d.valor),0)
+	  from desconto d 
+	  inner join emp_desc ed
+	   on ed.cod_desc = d.cod_desc
+		where ed.matr= e.matr),0),2) = 0 THEN 0
+		ELSE round(coalesce((select sum(v.valor) 
+	 from vencimento  v inner join emp_venc ev
+	 on ev.cod_venc = v.cod_venc
+	 where ev.matr = e.matr) - ( select coalesce(sum(d.valor),0)
+	  from desconto d 
+	  inner join emp_desc ed
+	   on ed.cod_desc = d.cod_desc
+		where ed.matr= e.matr),0),2)END as "Salario Liquidoaws"
+from 
+empregado e 
+inner join divisao d
+on d.cod_divisao = e.lotacao_div 
+inner join departamento dep
+on dep.cod_dep =  d.cod_dep
+order by "Salario Liquidoaws" desc
